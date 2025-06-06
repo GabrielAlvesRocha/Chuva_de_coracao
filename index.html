@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Matrix Love - Chuva de Amor</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; overflow: hidden;
+      background: black;
+      height: 100%;
+    }
+    canvas {
+      position: absolute; top: 0; left: 0; display: block;
+    }
+    .overlay {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ff1493;
+      font-family: 'Courier New', monospace;
+      font-size: 3rem;
+      text-align: center;
+      pointer-events: none;
+      z-index: 10;
+      text-shadow: 0 0 15px #ff1493;
+      opacity: 0.3;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bgCanvas"></canvas>
+  <canvas id="explosionCanvas"></canvas>
+  <div class="overlay">💗 EU TE AMO! 💗</div>
+
+  <script>
+    const bgCanvas = document.getElementById('bgCanvas');
+    const exCanvas = document.getElementById('explosionCanvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    const exCtx = exCanvas.getContext('2d');
+
+    function resize() {
+      bgCanvas.width = exCanvas.width = window.innerWidth;
+      bgCanvas.height = exCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Chuva de "EU TE AMO"
+    const phrase = "EU TE AMO";
+    const fontSize = 36;
+    const columnsCount = Math.floor(window.innerWidth / 80);
+    const columns = [];
+
+    for(let i = 0; i < columnsCount; i++) {
+      columns.push({
+        x: i * 80 + (Math.random() * 30 - 15),
+        y: Math.random() * -window.innerHeight,
+        speed: 6 + Math.random() * 5
+      });
+    }
+
+    function drawRain() {
+      bgCtx.fillStyle = 'rgba(0,0,0,0.15)';
+      bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+      bgCtx.fillStyle = '#ff1493';
+      bgCtx.font = `${fontSize}px 'Courier New', monospace`;
+      bgCtx.textAlign = 'center';
+
+      columns.forEach(col => {
+        bgCtx.fillText(phrase, col.x, col.y);
+        col.y += col.speed;
+        if(col.y > bgCanvas.height + fontSize){
+          col.y = Math.random() * -window.innerHeight;
+          col.x = (columns.indexOf(col)) * 80 + (Math.random() * 30 - 15);
+          col.speed = 6 + Math.random() * 5;
+        }
+      });
+
+      requestAnimationFrame(drawRain);
+    }
+    drawRain();
+
+    // Explosão otimizada
+    class HeartParticle {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.size = 20 + Math.random() * 15;
+        this.speedX = (Math.random() - 0.5) * 6;
+        this.speedY = (Math.random() - 1.5) * 6;
+        this.alpha = 1;
+        this.life = 180;
+        this.rotation = Math.random() * 2 * Math.PI;
+        this.rotationSpeed = (Math.random() - 0.5) * 0.1;
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.speedY += 0.1;
+        this.alpha = this.life / 180;
+        this.rotation += this.rotationSpeed;
+        this.life--;
+        return this.life > 0;
+      }
+
+      draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = '#ff1493';
+        ctx.shadowColor = '#ff69b4';
+        ctx.shadowBlur = 10;
+        ctx.font = `${this.size}px 'Courier New', monospace`;
+        ctx.fillText('❤️', -this.size / 2, this.size / 3);
+        ctx.restore();
+      }
+    }
+
+    let heartParticles = [];
+    const MAX_PARTICLES = 50;
+
+    function createHeartExplosion(x, y) {
+      for (let i = 0; i < 30; i++) {
+        if (heartParticles.length >= MAX_PARTICLES) {
+          heartParticles.shift(); // remove o mais antigo se exceder
+        }
+        heartParticles.push(new HeartParticle(x, y));
+      }
+    }
+
+    function animateHeartExplosion() {
+      exCtx.clearRect(0, 0, exCanvas.width, exCanvas.height);
+      heartParticles = heartParticles.filter(p => p.update());
+      heartParticles.forEach(p => p.draw(exCtx));
+      requestAnimationFrame(animateHeartExplosion);
+    }
+    animateHeartExplosion();
+
+    exCanvas.addEventListener('click', e => {
+      createHeartExplosion(e.clientX, e.clientY);
+    });
+  </script>
+</body>
+</html>
